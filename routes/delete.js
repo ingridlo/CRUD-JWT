@@ -1,19 +1,23 @@
-const express = require('express');
-const router = express.Router();
+const { Router } = require("express");
+const router = Router();
+const { pool } = require("../DB/config");
 
-/* GET quotes listing. */
-router.get('/', function(req, res, next) {
-  res.json({
-    data: [
-      {
-        quote: 'First, solve the problem. Then, write the code.',
-        author: 'John Johnson'
-      }
-    ],
-    meta: {
-      page: 1
-    }
-  });
+router.delete("/delete", async (req, res) => {
+  let cliente = await pool.connect();
+  try {
+    const { nombre_usuario } = req.body;    
+    console.log(nombre_usuario)
+    let result = await cliente.query(
+      `DELETE FROM usuarios WHERE nombre_usuario =$1`,
+      [nombre_usuario]
+    );
+    res.json(result);
+  } catch (err) {
+    console.log({ err });
+    res.status(500).json({ error: "Internal error server" });
+  } finally {
+    cliente.release(true);
+  }
 });
 
 module.exports = router;

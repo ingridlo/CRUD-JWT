@@ -1,19 +1,26 @@
-const express = require('express');
-const router = express.Router();
+const { Router } = require("express");
+const bcrypt = require("bcrypt");
+const saltRounds = 10;
+const router = Router();
+const { pool } = require("../DB/config");
 
-/* GET quotes listing. */
-router.get('/', function(req, res, next) {
-  res.json({
-    data: [
-      {
-        quote: 'First, solve the problem. Then, write the code.',
-        author: 'John Johnson'
-      }
-    ],
-    meta: {
-      page: 1
-    }
-  });
+router.patch("/update/:id", async (req, res) => {
+  let cliente = await pool.connect();
+  try {
+    const { id } = req.params;   
+    const {nombre_usuario, password} = req.body;
+    const hash = bcrypt.hashSync(password, saltRounds);     
+    const actualizar = await cliente.query(
+      `UPDATE usuarios SET nombre_usuario = $1, password = $2 WHERE id = $3;`,[nombre_usuario, hash,id]
+    );
+    res.status(200).json('actualizar');
+  } catch (err) {
+    console.log({ err });
+    res.status(500).json({ error: "Internal error server" });
+  } finally {
+    cliente.release(true);
+  }
 });
+
 
 module.exports = router;
